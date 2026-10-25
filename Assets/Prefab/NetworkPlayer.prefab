@@ -128,6 +128,9 @@ GameObject:
   - component: {fileID: 7079305783727679654}
   - component: {fileID: 6916746180829479983}
   - component: {fileID: 4634204805505531400}
+  - component: {fileID: -136553625694486214}
+  - component: {fileID: -8931100106949073409}
+  - component: {fileID: 2902950783705704387}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -275,7 +278,7 @@ MonoBehaviour:
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
@@ -342,3 +345,51 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnManager
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &-136553625694486214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2794660358389794435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59d5457b46a3d4e4d91302b03cee18ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerColorManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerRenderer: {fileID: 6882138924114175015}
+  playerMaterials:
+  - {fileID: 2100000, guid: d436d51e230bddd4e8939dd1dbf4e084, type: 2}
+  - {fileID: 2100000, guid: 03f5548ac97904d4282fb868dd00073b, type: 2}
+  - {fileID: 2100000, guid: a9253488560b68a42b911e802da73692, type: 2}
+  - {fileID: 2100000, guid: a879b7c3b4a6fef4c8459d3c1ea2921a, type: 2}
+--- !u!114 &-8931100106949073409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2794660358389794435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e5c7c67c1de4034f9c88253d18a5766, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerCameraTarget
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2902950783705704387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2794660358389794435}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aaf3a3fb108d7a44c8112093814c8eae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
+  moveSpeed: 10
+  gravity: -20
+  groundGravity: -2
