@@ -1,5 +1,7 @@
+// QUIVER CLASH 3D | STATUS: UPDATED (v5) - random SAFE corner spawns (no spawn camping, no overlapping)
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -22,8 +24,10 @@ public class GameManager : NetworkBehaviour
     [SerializeField] int scoreToWin = 5;
     [SerializeField] int matchSeconds = 90;
     [SerializeField] int minPlayers = 2;   // set to 1 if you want to test alone
+    [SerializeField] float safeSpawnDistance = 12f;   // a respawn corner must be at least this far from every other alive player
+    [SerializeField] float spawnHeight = 1f;   // players always spawn at this height, so a wrong Y on a spawn point can't drop them through the floor
 
-    [Header("Spawn points: P1 top-left, P2 bottom-right, P3 top-right, P4 bottom-left")]
+    [Header("Spawn points: the 4 arena corners, in any order. Players get a random SAFE corner")]
     [SerializeField] Transform[] spawnPoints;
 
     /// <summary>Raised on every client when the server broadcasts the end of the match (use for sound / effects).</summary>
@@ -39,10 +43,42 @@ public class GameManager : NetworkBehaviour
         base.OnDestroy();
     }
 
-    public Vector3 GetSpawnPoint(ulong clientId)
+    public int MinPlayers => minPlayers;
+
+    /// <summary>
+    /// Picks a random corner that is far from every OTHER alive player (no spawn camping, no spawning on top of someone).
+    /// If no corner is far enough, it uses the corner that is farthest from the nearest enemy.
+    /// </summary>
+    public Vector3 GetRandomSpawnPoint(ulong forClientId)
     {
-        return spawnPoints[(int)(clientId % (ulong)spawnPoints.Length)].position;
+        var others = new List<Vector3>();
+        foreach (var p in FindObjectsByType<PlayerStats>(FindObjectsSortMode.None))
+        {
+            if (p.OwnerClientId != forClientId && p.IsAlive.Value)
+                others.Add(Flat(p.transform.position));
+        }
+
+        var safe = new List<Transform>();
+        Transform farthest = spawnPoints[0];
+        float farthestDistance = -1f;
+
+        foreach (var sp in spawnPoints)
+        {
+            float nearest = float.MaxValue;
+            foreach (var o in others)
+                nearest = Mathf.Min(nearest, Vector3.Distance(Flat(sp.position), o));
+
+            if (nearest >= safeSpawnDistance) safe.Add(sp);
+            if (nearest > farthestDistance) { farthestDistance = nearest; farthest = sp; }
+        }
+
+        Transform pick = safe.Count > 0 ? safe[UnityEngine.Random.Range(0, safe.Count)] : farthest;
+        Vector3 pos = pick.position;
+        pos.y = spawnHeight;
+        return pos;
     }
+
+    static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
 
     // ---------------- START (host only) ----------------
 
@@ -81,11 +117,25 @@ public class GameManager : NetworkBehaviour
 
     void ResetPlayers()
     {
+        // shuffle the corners so everybody starts in a different, random corner
+        var order = new List<int>();
+        for (int i = 0; i < spawnPoints.Length; i++) order.Add(i);
+        for (int i = order.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            int tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+        }
+
+        int n = 0;
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {
             if (client.PlayerObject == null) continue;
-            client.PlayerObject.GetComponent<PlayerStats>()
-                  .ResetForMatch(GetSpawnPoint(client.ClientId));
+
+            Vector3 pos = spawnPoints[order[n % order.Count]].position;
+            pos.y = spawnHeight;
+            n++;
+
+            client.PlayerObject.GetComponent<PlayerStats>().ResetForMatch(pos);
         }
     }
 

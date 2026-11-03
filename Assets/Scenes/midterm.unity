@@ -627,6 +627,8 @@ MonoBehaviour:
   scoreToWin: 5
   matchSeconds: 90
   minPlayers: 2
+  safeSpawnDistance: 12
+  spawnHeight: 1
   spawnPoints:
   - {fileID: 112779637}
   - {fileID: 1850762010}
@@ -2113,9 +2115,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad283d8ba30d1bd4dbf7f2a57934cb24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConnectionUI
+  connectPanel: {fileID: 0}
   hostButton: {fileID: 901429760}
-  clientButton: {fileID: 45754310}
+  joinButton: {fileID: 0}
+  joinCodeInput: {fileID: 0}
+  statusText: {fileID: 0}
+  joinCodeText: {fileID: 0}
   startButton: {fileID: 2117194400}
+  useRelay: 1
+  maxPlayers: 4
 --- !u!114 &760044540
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,4 +1,6 @@
+// QUIVER CLASH 3D | STATUS: UPDATED (v5) - adds TeleportOwner() so respawns really move the player
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 /// <summary>
@@ -13,6 +15,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] float moveSpeed = 6f;
 
     Rigidbody rb;
+    NetworkTransform netTransform;
     PlayerStats stats;
     PlayerShooting shooting;
     Camera cam;
@@ -23,6 +26,7 @@ public class PlayerController : NetworkBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        netTransform = GetComponent<NetworkTransform>();
         stats = GetComponent<PlayerStats>();
         shooting = GetComponent<PlayerShooting>();
     }
@@ -69,6 +73,13 @@ public class PlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        // Safety net: if the player ever falls out of the arena, put them back at their spawn
+        if (rb.position.y < -5f && GameManager.Instance != null)
+        {
+            TeleportOwner(GameManager.Instance.GetRandomSpawnPoint(OwnerClientId));
+            return;
+        }
+
         float speed = moveSpeed;
         if (stats.ActivePowerUp.Value == PowerUpType.SpeedBoost) speed *= 1.5f;
 
@@ -77,5 +88,18 @@ public class PlayerController : NetworkBehaviour
         rb.linearVelocity = velocity;
 
         rb.MoveRotation(Quaternion.Euler(0f, aimYaw, 0f));
+    }
+
+    /// <summary>
+    /// Moves THIS player instantly. Only the owner may call it (PlayerStats sends it to the owner via an RPC).
+    /// Sets every layer that could keep the old position: rigidbody, transform, physics, and the NetworkTransform.
+    /// </summary>
+    public void TeleportOwner(Vector3 position)
+    {
+        rb.linearVelocity = Vector3.zero;
+        rb.position = position;
+        transform.position = position;
+        Physics.SyncTransforms();
+        netTransform.Teleport(position, transform.rotation, transform.localScale);
     }
 }

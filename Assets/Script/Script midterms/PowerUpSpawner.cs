@@ -1,3 +1,4 @@
+// QUIVER CLASH 3D | STATUS: SAME - unchanged from the first version (works for both 2D and 3D)
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;

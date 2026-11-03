@@ -1,3 +1,4 @@
+// QUIVER CLASH 3D | STATUS: UPDATED (v5) - respawn at a random safe corner (fixes respawning where you died)
 using System.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -25,18 +26,11 @@ public class PlayerStats : NetworkBehaviour
     [Tooltip("The Capsule's MeshRenderer - gets tinted with the player's color")]
     [SerializeField] Renderer body;
 
-    static readonly Color[] Palette =
-    {
-        new Color(0.35f, 0.55f, 1f),   // P1
-        new Color(1f, 0.5f, 0.4f),     // P2
-        new Color(0.4f, 0.85f, 0.5f),  // P3
-        new Color(1f, 0.8f, 0.3f)      // P4
-    };
-
     Color baseColor = Color.white;
     Renderer[] allRenderers;
-    NetworkTransform netTransform;
+    Collider col;
     Rigidbody rb;
+    PlayerController controller;
 
     // server-only bookkeeping (not synced)
     float powerUpEndTime;
@@ -45,13 +39,14 @@ public class PlayerStats : NetworkBehaviour
     void Awake()
     {
         allRenderers = GetComponentsInChildren<Renderer>();
-        netTransform = GetComponent<NetworkTransform>();
+        col = GetComponent<Collider>();
+        controller = GetComponent<PlayerController>();
         rb = GetComponent<Rigidbody>();
     }
 
     public override void OnNetworkSpawn()
     {
-        baseColor = Palette[(int)(OwnerClientId % (ulong)Palette.Length)];
+        baseColor = PlayerColors.Get(OwnerClientId);
         SetBodyColor(baseColor);
         ApplyAliveVisuals(IsAlive.Value);
         IsAlive.OnValueChanged += OnAliveChanged;
@@ -69,6 +64,8 @@ public class PlayerStats : NetworkBehaviour
     void ApplyAliveVisuals(bool alive)
     {
         foreach (var r in allRenderers) r.enabled = alive;
+        col.enabled = alive;          // a dead player can't be bumped into or block anyone
+        rb.useGravity = alive;        // ...and doesn't fall through the floor while the collider is off
     }
 
     void SetBodyColor(Color c)
@@ -110,8 +107,6 @@ public class PlayerStats : NetworkBehaviour
         if (Health.Value == 0)
         {
             IsAlive.Value = false;
-            // park the (invisible) body in its spawn corner so it doesn't block anyone
-            TeleportTo(GameManager.Instance.GetSpawnPoint(OwnerClientId));
             GameManager.Instance.OnPlayerEliminated(this, attackerId);
             StartCoroutine(RespawnRoutine());
         }
@@ -147,6 +142,12 @@ public class PlayerStats : NetworkBehaviour
         yield return new WaitForSeconds(RespawnDelay);
         if (GameManager.Instance.MatchOver.Value) yield break;
 
+        // 1) pick a random SAFE corner and move the still-hidden player there
+        TeleportTo(GameManager.Instance.GetRandomSpawnPoint(OwnerClientId));
+
+        // 2) give the teleport a moment to arrive, THEN bring the player back
+        yield return new WaitForSeconds(0.25f);
+
         Health.Value = MaxHealth;
         Ammo.Value = StartAmmo;
         ActivePowerUp.Value = PowerUpType.None;
@@ -159,7 +160,7 @@ public class PlayerStats : NetworkBehaviour
         // wait until the scene's GameManager exists, then move to our corner
         while (GameManager.Instance == null) yield return null;
         yield return null;
-        TeleportTo(GameManager.Instance.GetSpawnPoint(OwnerClientId));
+        TeleportTo(GameManager.Instance.GetRandomSpawnPoint(OwnerClientId));
     }
 
     /// <summary>Called by the server at the start of every match / rematch.</summary>
@@ -192,9 +193,7 @@ public class PlayerStats : NetworkBehaviour
     [ClientRpc]
     void RespawnClientRpc(Vector3 position, ClientRpcParams rpcParams = default)
     {
-        netTransform.Teleport(position, Quaternion.identity, transform.localScale);
-        rb.position = position;
-        rb.linearVelocity = Vector3.zero;
+        controller.TeleportOwner(position);   // runs on the owner only
     }
 
     [ClientRpc]
@@ -205,7 +204,7 @@ public class PlayerStats : NetworkBehaviour
 
     IEnumerator Flash()
     {
-        SetBodyColor(Color.red);
+        SetBodyColor(Color.white);   // hit flash (white, so it never looks like the red player)
         yield return new WaitForSeconds(0.1f);
         SetBodyColor(baseColor);
     }
