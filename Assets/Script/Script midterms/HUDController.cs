@@ -15,13 +15,17 @@ public class HUDController : MonoBehaviour
     [SerializeField] TMP_Text timerText;
     [SerializeField] TMP_Text bannerText;
 
+    private GameManager gm;
+
     float nextScoreboardRefresh;
+
+    private void Start()
+    {
+        gm = GameManager.Instance;
+    }
 
     void Update()
     {
-        var gm = GameManager.Instance;
-        if (gm == null) return;
-
         // Timer
         int t = gm.TimeLeft.Value;
         timerText.text = $"{t / 60:00}:{t % 60:00}";
