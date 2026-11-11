@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -24,6 +25,7 @@ public class PlayerStats : NetworkBehaviour
 
     [Tooltip("The Capsule's MeshRenderer - gets tinted with the player's color")]
     [SerializeField] Renderer body;
+    GameManager _gameManager = GameManager.Instance;
 
     static readonly Color[] Palette =
     {
@@ -36,7 +38,6 @@ public class PlayerStats : NetworkBehaviour
     Color baseColor = Color.white;
     Renderer[] allRenderers;
     NetworkTransform netTransform;
-    Rigidbody rb;
 
     // server-only bookkeeping (not synced)
     float powerUpEndTime;
@@ -46,7 +47,6 @@ public class PlayerStats : NetworkBehaviour
     {
         allRenderers = GetComponentsInChildren<Renderer>();
         netTransform = GetComponent<NetworkTransform>();
-        rb = GetComponent<Rigidbody>();
     }
 
     public override void OnNetworkSpawn()
@@ -95,7 +95,7 @@ public class PlayerStats : NetworkBehaviour
     public void TakeDamage(int amount, ulong attackerId)
     {
         if (!IsServer || !IsAlive.Value || Time.time < invulnerableUntil) return;
-        if (GameManager.Instance == null || !GameManager.Instance.IsMatchActive.Value) return;
+        if (_gameManager == null || !_gameManager.IsMatchActive.Value) return;
 
         if (ActivePowerUp.Value == PowerUpType.Shield)
         {
@@ -112,7 +112,7 @@ public class PlayerStats : NetworkBehaviour
             IsAlive.Value = false;
             // park the (invisible) body in its spawn corner so it doesn't block anyone
             TeleportTo(GameManager.Instance.GetSpawnPoint(OwnerClientId));
-            GameManager.Instance.OnPlayerEliminated(this, attackerId);
+            _gameManager.OnPlayerEliminated(this, attackerId);
             StartCoroutine(RespawnRoutine());
         }
     }
@@ -182,19 +182,13 @@ public class PlayerStats : NetworkBehaviour
     /// <summary>Respawn teleport: server tells the OWNER client to move (owner has authority over position).</summary>
     public void TeleportTo(Vector3 position)
     {
-        var target = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
-        };
-        RespawnClientRpc(position, target);
+        RespawnClientRpc(position);
     }
 
-    [ClientRpc]
-    void RespawnClientRpc(Vector3 position, ClientRpcParams rpcParams = default)
+    [Rpc(SendTo.Owner)]
+    void RespawnClientRpc(Vector3 position)
     {
         netTransform.Teleport(position, Quaternion.identity, transform.localScale);
-        rb.position = position;
-        rb.linearVelocity = Vector3.zero;
     }
 
     [ClientRpc]

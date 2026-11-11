@@ -25,7 +25,7 @@ public class Arrow : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        transform.position += transform.forward * speed * Time.deltaTime;
+        transform.position += speed * Time.deltaTime * transform.forward;
 
         if (Time.time - spawnTime >= lifetime) DespawnSelf();
     }

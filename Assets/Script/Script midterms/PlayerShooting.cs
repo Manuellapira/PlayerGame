@@ -22,19 +22,15 @@ public class PlayerShooting : NetworkBehaviour
     public void TryShoot(float yawDegrees)
     {
         if (Time.time - lastRequestTime < Cooldown) return;
+        if (!stats.TryConsumeAmmo()) return;                     // must have ammo
         lastRequestTime = Time.time;
         ShootArrowServerRpc(yawDegrees);
     }
 
-    [ServerRpc]   // RequireOwnership = true: only the owner can call this on their own player
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]   // RequireOwnership = true: only the owner can call this on their own player
     void ShootArrowServerRpc(float yawDegrees)
     {
-        var gm = GameManager.Instance;
-        if (gm == null || !gm.IsMatchActive.Value) return;       // match must be running
-        if (!stats.IsAlive.Value) return;                        // must be alive
         if (Time.time - lastShotTime < Cooldown * 0.9f) return;  // cooldown (small tolerance for network jitter)
-        if (!stats.TryConsumeAmmo()) return;                     // must have ammo
-
         lastShotTime = Time.time;
 
         if (stats.ActivePowerUp.Value == PowerUpType.TripleShot)
@@ -47,7 +43,6 @@ public class PlayerShooting : NetworkBehaviour
         {
             SpawnArrow(yawDegrees);
         }
-
         ShootFxClientRpc();
     }
 
