@@ -22,7 +22,7 @@ public class PlayerShooting : NetworkBehaviour
     public void TryShoot(float yawDegrees)
     {
         if (Time.time - lastRequestTime < Cooldown) return;
-        if (!stats.TryConsumeAmmo()) return;                     // must have ammo
+        if (stats.Ammo.Value <= 0) return;   // must have ammo
         lastRequestTime = Time.time;
         ShootArrowServerRpc(yawDegrees);
     }
@@ -30,6 +30,7 @@ public class PlayerShooting : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]   // RequireOwnership = true: only the owner can call this on their own player
     void ShootArrowServerRpc(float yawDegrees)
     {
+        stats.Ammo.Value--;
         if (Time.time - lastShotTime < Cooldown * 0.9f) return;  // cooldown (small tolerance for network jitter)
         lastShotTime = Time.time;
 

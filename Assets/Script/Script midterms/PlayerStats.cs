@@ -84,14 +84,7 @@ public class PlayerStats : NetworkBehaviour
     }
 
     // ---------------- SERVER LOGIC ----------------
-
-    public bool TryConsumeAmmo()
-    {
-        if (!IsServer || Ammo.Value <= 0) return false;
-        Ammo.Value--;
-        return true;
-    }
-
+    
     public void TakeDamage(int amount, ulong attackerId)
     {
         if (!IsServer || !IsAlive.Value || Time.time < invulnerableUntil) return;
