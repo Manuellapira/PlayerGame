@@ -1045,7 +1045,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad283d8ba30d1bd4dbf7f2a57934cb24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConnectionUI
-  UIPanel: {fileID: 3352380028252839296}
+  uiPanel: {fileID: 3352380028252839296}
   hostButton: {fileID: 7886603551631493806}
   clientButton: {fileID: 4219849298241333665}
   startButton: {fileID: 318072525851415008}

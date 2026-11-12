@@ -27,7 +27,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] Transform[] spawnPoints;
 
     /// <summary>Raised on every client when the server broadcasts the end of the match (use for sound / effects).</summary>
-    public static event Action<ulong> OnMatchEnded;
+    public static event Action OnMatchEnded;
 
     Coroutine matchRoutine;
 
@@ -123,7 +123,7 @@ public class GameManager : NetworkBehaviour
         WinnerId.Value = winnerId;
 
         // Broadcast
-        MatchEndedClientRpc(winnerId);
+        MatchEndedRpc(winnerId);
     }
 
     ulong GetLeader()
@@ -143,10 +143,10 @@ public class GameManager : NetworkBehaviour
         return tie ? ulong.MaxValue : leader;   // tie = draw
     }
 
-    [ClientRpc]
-    void MatchEndedClientRpc(ulong winnerId)
+    [Rpc(SendTo.Everyone)]
+    void MatchEndedRpc(ulong winnerId)
     {
         // Players are frozen automatically because PlayerController checks IsMatchActive.
-        OnMatchEnded?.Invoke(winnerId);
+        OnMatchEnded?.Invoke();
     }
 }

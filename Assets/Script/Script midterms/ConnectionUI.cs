@@ -1,4 +1,7 @@
 // QUIVER CLASH 3D | STATUS: SAME - unchanged from the first version (works for both 2D and 3D)
+
+using System;
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +12,7 @@ using UnityEngine.UI;
 /// </summary>
 public class ConnectionUI : MonoBehaviour
 {
-    [SerializeField] GameObject UIPanel;
+    [SerializeField] GameObject uiPanel;
     [SerializeField] Button hostButton;
     [SerializeField] Button clientButton;
     [SerializeField] Button startButton;
@@ -22,8 +25,14 @@ public class ConnectionUI : MonoBehaviour
     {
         _gameManager = GameManager.Instance;
         _networkManager = NetworkManager.Singleton;
+        GameManager.OnMatchEnded += TogglePanel;
         
         Refresh();
+    }
+
+    private void OnEnable()
+    {
+        GameManager.OnMatchEnded += Refresh;
     }
 
     public void StartHost()
@@ -41,11 +50,16 @@ public class ConnectionUI : MonoBehaviour
      {
          if (_gameManager != null) {
              _gameManager.StartMatchRequest();
-             Refresh();
+             TogglePanel();
          }
-     }   
+     }
 
-    private void Refresh()
+     private void TogglePanel()
+     {
+         uiPanel.SetActive(!uiPanel.activeSelf);
+     }
+
+     private void Refresh()
     {
         bool running = _networkManager.IsListening;
         hostButton.gameObject.SetActive(!running);
