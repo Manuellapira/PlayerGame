@@ -9,26 +9,47 @@ using UnityEngine.UI;
 /// </summary>
 public class ConnectionUI : MonoBehaviour
 {
+    [SerializeField] GameObject UIPanel;
     [SerializeField] Button hostButton;
     [SerializeField] Button clientButton;
     [SerializeField] Button startButton;
+    
+    GameManager _gameManager;
+    NetworkManager _networkManager;
 
-    void Start()
+
+    private void Start()
     {
-        hostButton.onClick.AddListener(() => { NetworkManager.Singleton.StartHost(); Refresh(); });
-        clientButton.onClick.AddListener(() => { NetworkManager.Singleton.StartClient(); Refresh(); });
-        startButton.onClick.AddListener(() =>
-        {
-            if (GameManager.Instance != null) GameManager.Instance.StartMatchRequest();
-        });
+        _gameManager = GameManager.Instance;
+        _networkManager = NetworkManager.Singleton;
+        
         Refresh();
     }
 
-    void Refresh()
+    public void StartHost()
     {
-        bool running = NetworkManager.Singleton.IsListening;
+        NetworkManager.Singleton.StartHost();
+        Refresh();
+    }
+    public void StartClient()
+    {
+        NetworkManager.Singleton.StartClient();
+        Refresh();
+    }
+
+     public void StartMatch()
+     {
+         if (_gameManager != null) {
+             _gameManager.StartMatchRequest();
+             Refresh();
+         }
+     }   
+
+    private void Refresh()
+    {
+        bool running = _networkManager.IsListening;
         hostButton.gameObject.SetActive(!running);
         clientButton.gameObject.SetActive(!running);
-        startButton.gameObject.SetActive(running && NetworkManager.Singleton.IsServer);
+        startButton.gameObject.SetActive(running && _networkManager.IsServer);
     }
 }
